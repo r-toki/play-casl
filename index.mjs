@@ -2,6 +2,14 @@ import { defineAbility } from "@casl/ability";
 
 const p = (input) => console.log(input);
 
+class Entity {
+  constructor(attrs) {
+    Object.assign(this, attrs);
+  }
+}
+
+class Article extends Entity {}
+
 {
   p("--- example 1 ---");
 
@@ -16,14 +24,6 @@ const p = (input) => console.log(input);
   p(ability.can("delete", "User"));
   p(ability.cannot("delete", "User"));
 }
-
-class Entity {
-  constructor(attrs) {
-    Object.assign(this, attrs);
-  }
-}
-
-class Article extends Entity {}
 
 {
   p("--- example 2 ---");
