@@ -1,4 +1,9 @@
-import { defineAbility } from "@casl/ability";
+import {
+  Ability,
+  AbilityBuilder,
+  defineAbility,
+  ForbiddenError,
+} from "@casl/ability";
 
 const p = (input) => console.log(input);
 
@@ -85,4 +90,65 @@ class Article extends Entity {}
   p(ability.can("read", article));
   p(ability.can("do", "SomethingUndeclared"));
   p(ability.can("read", "Article")); // -> true. "can I read SOME article?"
+}
+
+{
+  p("--- example 5 ---");
+
+  const ability = defineAbility((can, cannot) => {
+    can("manage", "all");
+    cannot("delete", "all");
+  });
+
+  p(ability.can("read", "Post")); // direct rules are checked by logical "OR"
+  p(ability.can("delete", "Post")); // inverted rules are checked by logical "AND"
+}
+
+{
+  p("--- example 6 ---");
+
+  const user = { id: 1 };
+  const ability = defineAbility((can, cannot) => {
+    cannot("read", "all", { private: true });
+    can("read", "all", { authorId: user.id });
+  });
+
+  p(ability.can("read", { private: true }));
+  p(ability.can("read", { authorId: user.id }));
+  p(ability.can("read", { authorId: user.id, private: true })); // -> true. always remember to put inverted rules after the direct one!
+}
+
+{
+  p("--- example 7 ---");
+
+  const ability = defineAbility((can, cannot) => {
+    can("read", "all");
+    cannot("read", "all", { private: true }).because(
+      "You are not allowed to read private information"
+    );
+  });
+
+  try {
+    ForbiddenError.from(ability).throwUnlessCan("read", { private: true });
+  } catch (e) {
+    p(e.message);
+  }
+}
+
+{
+  p("--- example 8 ---");
+
+  const ability = new Ability();
+
+  const unsubscribe = ability.on("update", ({ rules, target }) => {
+    p(rules);
+    p(target);
+  });
+
+  const { can, rules } = new AbilityBuilder();
+  can("read", "all");
+
+  ability.update(rules);
+
+  unsubscribe();
 }
